@@ -1,7 +1,10 @@
 ﻿using HospitalAPI.Dtos;
+using HospitalAPI.Registration.Dtos;
 using HospitalLibrary.Core.Model;
+using Npgsql.TypeHandlers;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -9,15 +12,26 @@ namespace HospitalAPI.Mappers
 {
     public class AppointmentMapper : IGenericMapper<Appointment, AppointmentDTO>
     {
+        private readonly IGenericMapper<DateRange, DateRangeDTO> _dateRangeMapper;
+        private readonly IGenericMapper<Patient, PatientDTO> _patientMapper;
+
+        public AppointmentMapper(IGenericMapper<DateRange, DateRangeDTO> dateRangeMapper, IGenericMapper<Patient, PatientDTO> patientMapper)
+        {
+            _dateRangeMapper = dateRangeMapper;
+            _patientMapper = patientMapper;
+        }
+
         public Appointment ToModel(AppointmentDTO appointmentDTO) {
             Appointment appointment = new Appointment();
-            appointment.AppointmentId = appointmentDTO.AppointmentId;
+            appointment.Id = appointmentDTO.Id;
             string hours = appointmentDTO.Time.Split(":")[0];
             string minutes = appointmentDTO.Time.Split(":")[1];
-            appointment.Start = appointmentDTO.Date;
-            appointment.Start = appointment.Start.AddHours(Int32.Parse(hours));
-            appointment.Start = appointment.Start.AddMinutes(Int32.Parse(minutes));
+            DateTime start = appointmentDTO.Date.AddHours(Int32.Parse(hours)).AddMinutes(Int32.Parse(minutes));
+            DateTime end = start.AddMinutes(30);
+            appointment.ScheduledDate = _dateRangeMapper.ToModel(new DateRangeDTO(start, end));
             appointment.PatientId = appointmentDTO.PatientId;
+            appointment.DoctorId = appointmentDTO.DoctorId;
+            appointment.IsFinished = appointmentDTO.IsFinished;
 
             return appointment;
         }
@@ -27,13 +41,15 @@ namespace HospitalAPI.Mappers
             foreach (var appointmentDTO in appointmentDTOs) 
             {
                 Appointment appointment = new Appointment();
-                appointment.AppointmentId = appointmentDTO.AppointmentId;
+                appointment.Id = appointmentDTO.Id;
                 string hours = appointmentDTO.Time.Split(":")[0];
                 string minutes = appointmentDTO.Time.Split(":")[1];
-                appointment.Start = appointmentDTO.Date;
-                appointment.Start.AddHours(Int32.Parse(hours));
-                appointment.Start.AddMinutes(Int32.Parse(minutes));
+                DateTime start = appointmentDTO.Date.AddHours(Int32.Parse(hours)).AddMinutes(Int32.Parse(minutes));
+                DateTime end = start.AddMinutes(30);
+                appointment.ScheduledDate = _dateRangeMapper.ToModel(new DateRangeDTO(start, end));
                 appointment.PatientId = appointmentDTO.PatientId;
+                appointment.DoctorId = appointmentDTO.DoctorId;
+                appointment.IsFinished = appointmentDTO.IsFinished;
                 appointments.Add(appointment);
             }
 
@@ -42,10 +58,13 @@ namespace HospitalAPI.Mappers
 
         public AppointmentDTO ToDTO(Appointment appointment) {
             AppointmentDTO appointmentDTO = new AppointmentDTO();
-            appointmentDTO.AppointmentId = appointment.AppointmentId;
-            appointmentDTO.Date = appointment.Start.Date;
-            appointmentDTO.Time = appointment.Start.Hour.ToString() + ":" + appointment.Start.Minute.ToString();
+            appointmentDTO.Id = appointment.Id;
+            appointmentDTO.Date = appointment.ScheduledDate.Start;
+            appointmentDTO.Time = appointment.ScheduledDate.Start.ToString("HH:mm");
             appointmentDTO.PatientId = (int)appointment.PatientId;
+            if(appointment.Patient != null)appointmentDTO.Patient = _patientMapper.ToDTO(appointment.Patient);
+            appointmentDTO.DoctorId = appointment.DoctorId;
+            appointmentDTO.IsFinished = appointment.IsFinished;
 
             return appointmentDTO;
         }
@@ -55,10 +74,13 @@ namespace HospitalAPI.Mappers
             foreach (var appointment in appointments) 
             {
                 AppointmentDTO appointmentDTO = new AppointmentDTO();
-                appointmentDTO.AppointmentId = appointment.AppointmentId;
-                appointmentDTO.Date = appointment.Start.Date;
-                appointmentDTO.Time = appointment.Start.Hour.ToString() + ":" + appointment.Start.Minute.ToString();
+                appointmentDTO.Id = appointment.Id;
+                appointmentDTO.Date = appointment.ScheduledDate.Start;
+                appointmentDTO.Time = appointment.ScheduledDate.Start.ToString("HH:mm");
                 appointmentDTO.PatientId = (int)appointment.PatientId;
+                if (appointment.Patient != null) appointmentDTO.Patient = _patientMapper.ToDTO(appointment.Patient);
+                appointmentDTO.DoctorId = appointment.DoctorId;
+                appointmentDTO.IsFinished = appointment.IsFinished;
                 appointmentDTOs.Add(appointmentDTO);
             }
 

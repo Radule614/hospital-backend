@@ -17,8 +17,9 @@ namespace HospitalLibrary.Core.Repository
         void Create(Room room);
         void Update(Room room);
         void Delete(Room room);
-        void DeleteRequest(MoveRequest request);
-        MoveRequest GetRequestById(int id);
+        public void DeleteRequest(MoveRequest request);
+        public MoveRequest GetRequestById(int id);
+        IEnumerable<MoveRequest> GetRequestsForRoom(int roomId);
         void MoveEquipment(MoveRequest moveRequest);
         void AddMoveRequest(MoveRequest moveRequest);
         void AddRenovationSplitRequest(MoveRequest renovationRequest);
@@ -27,6 +28,5 @@ namespace HospitalLibrary.Core.Repository
         IEnumerable<DateTime> FindFreeTimeSlots(FreeAppointmentRequest freeAppointmentRequest);
         void RenovationSplitOneRoom(MoveRequest renovationRequest);
         void RenovationMergeTwoRooms(MoveRequest renovationRequest);
-        IEnumerable<MoveRequest> GetRequestsForRoom(int roomId);
     }
 }

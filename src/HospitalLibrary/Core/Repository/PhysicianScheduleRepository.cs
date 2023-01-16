@@ -12,12 +12,23 @@ namespace HospitalLibrary.Core.Repository
     public class PhysicianScheduleRepository : IPhysicianScheduleRepository
     {
         private readonly HospitalDbContext _context;
-
-        public PhysicianScheduleRepository(HospitalDbContext context)
+        public PhysicianScheduleRepository(HospitalDbContext context) 
         {
             _context = context;
         }
+        public List<Appointment> FindAppointmentsByDoctor(int doctorId)
+        {
+            return this._context.PhysicianSchedules.Where(p => p.DoctorId == doctorId).First().Appointments;
+        }
 
+        public PhysicianSchedule FindByDoctor(int doctorId) 
+        {
+            return this._context.PhysicianSchedules.Where(p => p.DoctorId == doctorId).FirstOrDefault();
+        }
+        public void Schedule(Appointment appointment) 
+        {
+
+        }
         public void Create(PhysicianSchedule physicianSchedule)
         {
             _context.PhysicianSchedules.Add(physicianSchedule);
@@ -45,7 +56,7 @@ namespace HospitalLibrary.Core.Repository
 
         public IEnumerable<PhysicianSchedule> GetAll()
         {
-            return _context.PhysicianSchedules.Include(r => r.Appointments).Include(r => r.Vacations).ToList();
+            return _context.PhysicianSchedules.Include(r => r.Appointments).ThenInclude(y => y.Patient).Include(r => r.Vacations).ToList();
         }
 
         public PhysicianSchedule GetById(int id)
@@ -55,6 +66,7 @@ namespace HospitalLibrary.Core.Repository
 
         public void Update(PhysicianSchedule physicianSchedule)
         {
+            _context.Attach(physicianSchedule);
             _context.Entry(physicianSchedule).State = EntityState.Modified;
 
             try
